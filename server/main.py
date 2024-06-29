@@ -75,4 +75,43 @@ def get_balance(current_user: models.User = Depends(get_current_user)):
     return {"balance": current_user.balance}
 
 @app.post("/request_loan")
-def request_loan(curr
+def request_loan(loan : schemas.Loan ,current_user: models.User = Depends(get_current_user), db : Session = Depends(get_db)):
+    if current_user.roles != "USER":
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="You are not authorized to perform this action")
+    
+    loan_history = db.query(models.Loan).filter(models.Loan.user_id == current_user.id).order_by(models.Loan.request_date.desc()).first()
+    if loan_history and loan_history.status != "PAID" :
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="You already have a loan")
+    
+    loan = models.Loan(
+        user_id = current_user.id,
+        amount = loan.amount,
+        status = "PENDING",
+    )
+    db.add(loan)
+    db.commit()
+    return {"Status" : "Request sent successfully!"}
+
+@app.post("/update_loan_status", response_model=schemas.Loan)
+def update_loan_status(loan_update: schemas.LoanUpdate, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if current_user.roles != "LOAN OFFICER":
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="You are not authorized to perform this action")
+    
+    loan_history = db.query(models.Loan).filter(models.Loan.user_id == current_user.id).order_by(models.Loan.request_date.desc()).first()
+
+    if not loan_history:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Loan not found")
+
+    loan_history.status = loan_update.status
+
+
+    if loan_history.status == "APPROVED":
+        loan_history.on_date = datetime.utcnow()
+        loan_history.dl_date = datetime.utcnow() + timedelta(days=60)
+
+    db.commit()
+    db.refresh(loan_history)
+    return {"Status" : "Updated successfully!"}
+
+
+

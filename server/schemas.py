@@ -53,4 +53,6 @@ class Balance(BaseModel):
 class Loan(BaseModel):
     phonenumber : str
     amount : float
-    
+
+class LoanUpdate(BaseModel):
+    status : str
