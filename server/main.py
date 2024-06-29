@@ -42,7 +42,7 @@ def login(user: schemas.UserLogin, db : Session = Depends(get_db)):
     if not db_user:
         raise HTTPException(status_code=400, detail="Invalid phone number or password")
     acess_token = create_access_token(data={"sub": db_user.phonenumber})
-    return {"access_token": acess_token, "token_type": "bearer"}
+    return {"access_token": acess_token, "token_type": "Bearer"}
 
 @app.post("/get_user", response_model=schemas.User)
 def get_user(current_user: models.User = Depends(get_current_user)):
@@ -71,13 +71,20 @@ def transfer(transfer: schemas.Transfer, current_user: models.User = Depends(get
 
 
 @app.post("/get_transactions", response_model=List[schemas.Transaction])
-def get_transactions(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+def get_transactions(
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
     sent_transactions = db.query(models.Transaction).filter(models.Transaction.sender_id == current_user.id).all()
     received_transactions = db.query(models.Transaction).filter(models.Transaction.reciver_id == current_user.id).all()
+    
     all_transactions = sent_transactions + received_transactions
+    
+    # Sort transactions by timestamp, most recent first
+    all_transactions.sort(key=lambda x: x.timestamp, reverse=True)
+    
+    return all_transactions
 
-    # Serialize transactions to match the Transaction schema
-    return [schemas.Transaction.from_orm(transaction) for transaction in all_transactions]
 @app.post("/balance", response_model=schemas.Balance)
 def get_balance(current_user: models.User = Depends(get_current_user)):
     return {"balance": current_user.balance}

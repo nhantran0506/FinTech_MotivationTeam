@@ -43,13 +43,10 @@ class Transaction(BaseModel):
     sender_id : str
     reciver_id : str
     amount : float
-    timestamp : str
+    timestamp : datetime 
 
     class Config:
         from_attributes = True
-        json_encoders = {
-            datetime: lambda v: v.isoformat() if isinstance(v, datetime) else None
-        }
         
 class Balance(BaseModel):
     balance: str
