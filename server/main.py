@@ -44,6 +44,10 @@ def login(user: schemas.UserLogin, db : Session = Depends(get_db)):
     acess_token = create_access_token(data={"sub": db_user.phonenumber})
     return {"access_token": acess_token, "token_type": "bearer"}
 
+@app.post("/get_user", response_model=schemas.User)
+def get_user(current_user: models.User = Depends(get_current_user)):
+    return current_user
+
 @app.post("/transfer", response_model=schemas.Transfer)
 def transfer(transfer: schemas.Transfer, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     if current_user.balance < transfer.amount:
