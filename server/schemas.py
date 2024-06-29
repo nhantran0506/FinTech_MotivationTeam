@@ -1,5 +1,6 @@
 from pydantic import BaseModel, validator
-
+from datetime import datetime
+from typing import List
 class UserBase(BaseModel):
     phonenumber: str
     social_id : str
@@ -40,12 +41,15 @@ class Transfer(BaseModel):
 class Transaction(BaseModel):
     id : str
     sender_id : str
-    receiver_id : str
+    reciver_id : str
     amount : float
     timestamp : str
 
     class Config:
         from_attributes = True
+        json_encoders = {
+            datetime: lambda v: v.isoformat() if isinstance(v, datetime) else None
+        }
         
 class Balance(BaseModel):
     balance: str

@@ -1,5 +1,6 @@
 from typing import Union
 from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import models, schemas
 from database import SessionLocal, engine
@@ -46,30 +47,33 @@ def login(user: schemas.UserLogin, db : Session = Depends(get_db)):
 @app.post("/transfer", response_model=schemas.Transfer)
 def transfer(transfer: schemas.Transfer, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     if current_user.balance < transfer.amount:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Insufficient balance")
-    
+        return JSONResponse(content={"status": "Insufficient balance"}, status_code=status.HTTP_400_NOT_FOUND)
+        
     receiver = models.get_user_by_phone(db, transfer.phonenumber_reciver)
     if not receiver:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        return JSONResponse(content={"status": "User not found!"}, status_code=status.HTTP_404_NOT_FOUND)
     
     current_user.balance -= transfer.amount
     receiver.balance += transfer.amount
 
     transaction = models.Transaction(
         sender_id=current_user.id,
-        receiver_id=receiver.id,
+        reciver_id=receiver.id,
         amount=transfer.amount,
     )
     db.add(transaction)
     db.commit()
-    return {"status": "Transfer successful"}
+    return JSONResponse(content={"status": "Transfer successful"}, status_code=status.HTTP_200_OK)
 
 
-@app.post("/transactions", response_model=List[schemas.Transaction])
-def get_transactions(current_user: models.User = Depends(get_current_user), db : Session = Depends(get_db)):
-    return db.query(models.Transaction).filter(models.Transaction.sender_id == current_user.id).all() + db.query(models.Transaction).filter(models.Transaction.receiver_id == current_user.id).all()
+@app.post("/get_transactions", response_model=List[schemas.Transaction])
+def get_transactions(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    sent_transactions = db.query(models.Transaction).filter(models.Transaction.sender_id == current_user.id).all()
+    received_transactions = db.query(models.Transaction).filter(models.Transaction.reciver_id == current_user.id).all()
+    all_transactions = sent_transactions + received_transactions
 
-
+    # Serialize transactions to match the Transaction schema
+    return [schemas.Transaction.from_orm(transaction) for transaction in all_transactions]
 @app.post("/balance", response_model=schemas.Balance)
 def get_balance(current_user: models.User = Depends(get_current_user)):
     return {"balance": current_user.balance}
