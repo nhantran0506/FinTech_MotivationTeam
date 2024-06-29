@@ -50,8 +50,8 @@ def get_user(current_user: models.User = Depends(get_current_user)):
 
 @app.post("/transfer", response_model=schemas.Transfer)
 def transfer(transfer: schemas.Transfer, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
-    if current_user.balance < transfer.amount:
-        return JSONResponse(content={"status": "Insufficient balance"}, status_code=status.HTTP_400_NOT_FOUND)
+    if current_user.balance < transfer.amount and transfer.amount > 0:
+        return JSONResponse(content={"status": "Insufficient balance"}, status_code=status.HTTP_400_BAD_REQUEST)
         
     receiver = models.get_user_by_phone(db, transfer.phonenumber_reciver)
     if not receiver:
@@ -78,12 +78,54 @@ def get_transactions(
     sent_transactions = db.query(models.Transaction).filter(models.Transaction.sender_id == current_user.id).all()
     received_transactions = db.query(models.Transaction).filter(models.Transaction.reciver_id == current_user.id).all()
     
+
     all_transactions = sent_transactions + received_transactions
-    
-    # Sort transactions by timestamp, most recent first
     all_transactions.sort(key=lambda x: x.timestamp, reverse=True)
     
+    result = []
+    for trans in all_transactions:  
+        if current_user.id == trans.sender_id:
+            result.append(schemas.Transaction(
+                amount = - trans.amount,
+                timestamp = trans.timestamp,
+                name = models.get_user_by_id(db, trans.sender_id).name
+            ))
+        else:
+            result.append(schemas.Transaction(
+                amount = trans.amount,
+                timestamp = trans.timestamp,
+                name = models.get_user_by_id(db, trans.reciver_id).name
+            ))
+    
+    return result
+
+
+    
     return all_transactions
+
+@app.post("/add_familiar_transactions")
+def add_familiar_transactions(
+    familiar_user : schemas.Familiar,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    familiar = models.FamiliarReciever(
+        account_id = current_user.id,
+        familiar_id = get_user_by_phone(db, familiar_user.phonenumber).id
+    )
+    db.add(familiar)
+    db.commit()
+    return JSONResponse(content={"status": "Familiar added successfully"}, status_code=status.HTTP_200_OK)
+
+@app.post("/get_familiars", response_model=List[schemas.FamiliarGet])
+def get_familiars(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    familiars = db.query(models.FamiliarReciever).filter(models.FamiliarReciever.account_id == current_user.id).all()
+    familiars_list = []
+
+    for familiar in familiars:
+        atrr = models.get_user_by_id(db, familiar.familiar_id)
+        familiars_list.append(schemas.FamiliarGet(phonenumber=atrr.phonenumber, name=atrr.name))
+    return familiars_list
 
 @app.post("/balance", response_model=schemas.Balance)
 def get_balance(current_user: models.User = Depends(get_current_user)):

@@ -39,14 +39,13 @@ class Transfer(BaseModel):
     amount: float
 
 class Transaction(BaseModel):
-    id : str
-    sender_id : str
-    reciver_id : str
     amount : float
     timestamp : datetime 
+    name : str
 
     class Config:
         from_attributes = True
+
         
 class Balance(BaseModel):
     balance: str
@@ -57,3 +56,10 @@ class Loan(BaseModel):
 
 class LoanUpdate(BaseModel):
     status : str
+
+
+class Familiar(BaseModel):
+    phonenumber : str
+
+class FamiliarGet(Familiar):
+    name : str
