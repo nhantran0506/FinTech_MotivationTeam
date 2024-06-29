@@ -173,3 +173,31 @@ export const getHistoryTransaction = async () => {
     throw error;
   }
 };
+
+export const getQrShare = async (qr_text: string) => {
+  const url = backEndUrl + "/qr";
+
+  const requestBody = {
+    qr_text: qr_text,
+  };
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+
+    return data.qr_image_base64;
+  } catch (error) {
+    console.error("Error getting history transactions:", error);
+    throw error;
+  }
+};
