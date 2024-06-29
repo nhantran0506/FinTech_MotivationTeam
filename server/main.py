@@ -7,6 +7,10 @@ from database import SessionLocal, engine
 from sqlalchemy.orm import Session
 from auth import *
 from typing import List
+import qrcode
+import base64
+from io import BytesIO
+
 app = FastAPI()
 
 models.Base.metadata.create_all(bind=engine)
@@ -172,3 +176,16 @@ def update_loan_status(loan_update: schemas.LoanUpdate, current_user: models.Use
 
 
 
+
+class QRRequest(BaseModel):
+    qr_text: str
+
+@app.post("/qr")
+def generate_qr(qr: QRRequest):
+    qr_image = qrcode.make(qr.qr_text, box_size=15)
+    qr_image_pil = qr_image.get_image()
+    stream = BytesIO()
+    qr_image_pil.save(stream, format='PNG')
+    qr_image_data = stream.getvalue()
+    qr_image_base64 = base64.b64encode(qr_image_data).decode('utf-8')
+    return {"qr_image_base64": qr_image_base64, "variable": qr.qr_text}
