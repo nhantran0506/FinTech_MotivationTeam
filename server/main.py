@@ -24,7 +24,7 @@ def get_db():
 def register(user: schemas.UserCreate, db : Session = Depends(get_db)):
     db_user = models.get_user_by_phone(db, phonenumber=user.phonenumber)
     if db_user:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User already exists")
+        return JSONResponse(content = {"Message": "User already exists"}, status_code= status.HTTP_400_BAD_REQUEST)
     
     
 
@@ -40,7 +40,7 @@ def register(user: schemas.UserCreate, db : Session = Depends(get_db)):
 def login(user: schemas.UserLogin, db : Session = Depends(get_db)):
     db_user = authenticate_user(db, user.phonenumber, user.password)
     if not db_user:
-        raise HTTPException(status_code=400, detail="Invalid phone number or password")
+        return JSONResponse(content = {"Message": "Invalid phone number or password"}, status_code= status.HTTP_400_BAD_REQUEST)
     acess_token = create_access_token(data={"sub": db_user.phonenumber})
     return {"access_token": acess_token, "token_type": "Bearer"}
 
@@ -51,11 +51,11 @@ def get_user(current_user: models.User = Depends(get_current_user)):
 @app.post("/transfer", response_model=schemas.Transfer)
 def transfer(transfer: schemas.Transfer, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     if current_user.balance < transfer.amount and transfer.amount > 0:
-        return JSONResponse(content={"status": "Insufficient balance"}, status_code=status.HTTP_400_BAD_REQUEST)
+        return JSONResponse(content={"Message": "Insufficient balance"}, status_code=status.HTTP_400_BAD_REQUEST)
         
     receiver = models.get_user_by_phone(db, transfer.phonenumber_reciver)
     if not receiver:
-        return JSONResponse(content={"status": "User not found!"}, status_code=status.HTTP_404_NOT_FOUND)
+        return JSONResponse(content={"Message": "User not found!"}, status_code=status.HTTP_404_NOT_FOUND)
     
     current_user.balance -= transfer.amount
     receiver.balance += transfer.amount
@@ -67,7 +67,7 @@ def transfer(transfer: schemas.Transfer, current_user: models.User = Depends(get
     )
     db.add(transaction)
     db.commit()
-    return JSONResponse(content={"status": "Transfer successful"}, status_code=status.HTTP_200_OK)
+    return JSONResponse(content={"Message": "Transfer successful"}, status_code=status.HTTP_200_OK)
 
 
 @app.post("/get_transactions", response_model=List[schemas.Transaction])
@@ -100,10 +100,7 @@ def get_transactions(
     return result
 
 
-    
-    return all_transactions
-
-@app.post("/add_familiar_transactions")
+@app.post("/add_familiar")
 def add_familiar_transactions(
     familiar_user : schemas.Familiar,
     current_user: models.User = Depends(get_current_user),
@@ -115,7 +112,7 @@ def add_familiar_transactions(
     )
     db.add(familiar)
     db.commit()
-    return JSONResponse(content={"status": "Familiar added successfully"}, status_code=status.HTTP_200_OK)
+    return JSONResponse(content={"Message": "Familiar added successfully"}, status_code=status.HTTP_200_OK)
 
 @app.post("/get_familiars", response_model=List[schemas.FamiliarGet])
 def get_familiars(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
@@ -129,16 +126,16 @@ def get_familiars(current_user: models.User = Depends(get_current_user), db: Ses
 
 @app.post("/balance", response_model=schemas.Balance)
 def get_balance(current_user: models.User = Depends(get_current_user)):
-    return {"balance": current_user.balance}
+    return JSONResponse(content={"Balance" : current_user.balance}, status_code=status.HTTP_200_OK)
 
 @app.post("/request_loan")
 def request_loan(loan : schemas.Loan ,current_user: models.User = Depends(get_current_user), db : Session = Depends(get_db)):
     if current_user.roles != "USER":
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="You are not authorized to perform this action")
+        return JSONResponse(content={"Message" : "You are not authorized to perform this action"}, status_code=status.HTTP_401_UNAUTHORIZED)
     
     loan_history = db.query(models.Loan).filter(models.Loan.user_id == current_user.id).order_by(models.Loan.request_date.desc()).first()
     if loan_history and loan_history.status != "PAID" :
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="You already have a loan")
+        return JSONResponse(content={"Message" : "You already have a loan"}, status_code=status.HTTP_400_BAD_REQUEST)
     
     loan = models.Loan(
         user_id = current_user.id,
@@ -147,17 +144,17 @@ def request_loan(loan : schemas.Loan ,current_user: models.User = Depends(get_cu
     )
     db.add(loan)
     db.commit()
-    return {"Status" : "Request sent successfully!"}
+    return JSONResponse(content={"Message" : "Request sent successfully!"}, status_code=status.HTTP_200_OK)
 
 @app.post("/update_loan_status", response_model=schemas.Loan)
 def update_loan_status(loan_update: schemas.LoanUpdate, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     if current_user.roles != "LOAN OFFICER":
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="You are not authorized to perform this action")
+        return JSONResponse(content= {"Message":"You are not authorized to perform this action"}, status_code=status.HTTP_401_UNAUTHORIZED)
     
     loan_history = db.query(models.Loan).filter(models.Loan.user_id == current_user.id).order_by(models.Loan.request_date.desc()).first()
 
     if not loan_history:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Loan not found")
+       return JSONResponse(content= {"Message":"Loan not found"}, status_code=status.HTTP_401_UNAUTHORIZED)
 
     loan_history.status = loan_update.status
 
@@ -168,7 +165,46 @@ def update_loan_status(loan_update: schemas.LoanUpdate, current_user: models.Use
 
     db.commit()
     db.refresh(loan_history)
-    return {"Status" : "Updated successfully!"}
+    return JSONResponse(content={"Message" : "Updated successfully!"}, status_code=status.HTTP_200_OK)
+
+@app.post("/create_officer")
+def create_officer(officer : schemas.UserCreate, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if current_user.roles!= "ADMIN":
+        return JSONResponse(content= {"Message":"You are not authorized to perform this action"}, status_code=status.HTTP_401_UNAUTHORIZED)
+    
+    db_user = models.get_user_by_phone(db, phonenumber=officer.phonenumber)
+    if db_user:
+        return JSONResponse(content = {"Message": "User already exists"}, status_code= status.HTTP_400_BAD_REQUEST)
+    
+    
+
+    return models.create_officer(
+        db, 
+        phonenumber=officer.phonenumber,
+        password=officer.password,
+        name=officer.name,
+        social_id=officer.social_id
+    )
+
+
+@app.post("/create_admin")
+def create_admin(admin : schemas.UserCreate, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if current_user.roles!= "ADMIN":
+        return JSONResponse(content= {"Message":"You are not authorized to perform this action"}, status_code=status.HTTP_401_UNAUTHORIZED)
+    
+    db_user = models.get_user_by_phone(db, phonenumber=admin.phonenumber)
+    if db_user:
+        return JSONResponse(content = {"Message": "User already exists"}, status_code= status.HTTP_400_BAD_REQUEST)
+    
+    
+
+    return models.create_admin(
+        db, 
+        phonenumber=admin.phonenumber,
+        password=admin.password,
+        name=admin.name,
+        social_id=admin.social_id
+    )
 
 
 

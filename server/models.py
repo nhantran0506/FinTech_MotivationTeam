@@ -42,6 +42,22 @@ def create_user(db : SessionLocal , name : str, social_id : str,  phonenumber: s
     db.refresh(user) # reload default values back in user object
     return user
 
+def create_officer(db : SessionLocal , name : str, social_id : str,  phonenumber: str, password: str):
+    hased_pwd = pwd_context.hash(password)
+    user = User(name = name , social_id=social_id, phonenumber = phonenumber, hash_pwd=hased_pwd, roles = "LOAN OFFICER")
+    db.add(user)
+    db.commit()
+    db.refresh(user) # reload default values back in user object
+    return user
+
+def create_admin(db : SessionLocal , name : str, social_id : str,  phonenumber: str, password: str):
+    hased_pwd = pwd_context.hash(password)
+    user = User(name = name , social_id=social_id, phonenumber = phonenumber, hash_pwd=hased_pwd, roles = "ADMIN")
+    db.add(user)
+    db.commit()
+    db.refresh(user) # reload default values back in user object
+    return user
+
 
 
 
