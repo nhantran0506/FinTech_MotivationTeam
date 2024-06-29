@@ -173,3 +173,60 @@ export const getHistoryTransaction = async () => {
     throw error;
   }
 };
+
+export const getFamilierUser = async () => {
+  const url = backEndUrl + "/get_familiars";
+  const token = await getToken();
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+
+    return data;
+  } catch (error) {
+    console.error("Error getting history transactions:", error);
+    throw error;
+  }
+};
+
+export const addFamilier = async (phonenumber: string) => {
+  const url = backEndUrl + "/add_familiar_transactions";
+  const token = await getToken();
+
+  const requestBody = {
+    phonenumber: phonenumber,
+  };
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+
+    return data;
+  } catch (error) {
+    console.error("Error creating user:", error);
+    throw error;
+  }
+};
