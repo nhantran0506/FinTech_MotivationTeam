@@ -1,4 +1,5 @@
 import { getCurrentUser } from "@/api_lib/api_call";
+import { ITransaction } from "@/type/transaction";
 import { GlobalContextType, IUser } from "@/type/user";
 import { useContext, createContext, useEffect, useState, FC } from "react";
 
@@ -11,6 +12,10 @@ const GlobalProvider: FC<{ children: React.ReactNode }> = ({ children }) => {
     social_id: "",
     name: "",
     balance: 0,
+  });
+  const [form, setForm] = useState<ITransaction>({
+    phonenumber_reciver: "",
+    amount: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -46,6 +51,8 @@ const GlobalProvider: FC<{ children: React.ReactNode }> = ({ children }) => {
         user,
         setUser,
         isLoading,
+        form,
+        setForm,
       }}
     >
       {children}
