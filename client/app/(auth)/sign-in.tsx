@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { Link, router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { View, Text, ScrollView, Dimensions, Alert, Image } from "react-native";
@@ -6,33 +6,33 @@ import { View, Text, ScrollView, Dimensions, Alert, Image } from "react-native";
 import { images } from "../../constants";
 import CustomButton from "@/components/CustomButton";
 import FormField from "@/components/FormField";
-import { useGlobalContext } from "@/context/GlobalProvider";
 import { getCurrentUser, signIn } from "@/api_lib/api_call";
+import { GlobalContext } from "@/context/GlobalProvider";
+import { GlobalContextType } from "@/type/user";
 
 const SignInPage = () => {
-  const {setUser, setIsLoggedIn} = useGlobalContext();
+  const {setUser, setIsLoggedIn} = useContext(GlobalContext) as GlobalContextType;
 
   const [form, setForm] = useState({
-    username: "",
+    phonenumber: "",
     password: "",
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const submit = async () => {
-    if (!form.username || !form.password) {
+    if (!form.phonenumber || !form.password) {
       Alert.alert("ERROR", "Please fill all field");
     }
 
     setIsSubmitting(true);
 
     try {
-      await signIn(form.username, form.password);
-      const result = await getCurrentUser(form.username);
+      await signIn(form.phonenumber, form.password);
+      const result = await getCurrentUser();
       setUser(result);
       setIsLoggedIn(true);
-
-      Alert.alert("Success", "User signed in successfully");
+      
       router.replace("/home");
     } catch (error) {
       if (error instanceof Error) {
@@ -59,13 +59,13 @@ const SignInPage = () => {
           />
 
           <Text className="text-2xl font-semibold text-white mt-10 font-psemibold">
-            Log in to Aora
+            Log in to your wallet
           </Text>
 
           <FormField
-            title="Username"
-            value={form.username}
-            handleChangeText={(e: string) => setForm({ ...form, username: e })}
+            title="Phone number"
+            value={form.phonenumber}
+            handleChangeText={(e: string) => setForm({ ...form, phonenumber: e })}
             otherStyles="mt-7"
             keyboardType="email-address"
           />

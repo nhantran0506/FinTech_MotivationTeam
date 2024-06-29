@@ -1,6 +1,7 @@
+import { ITransaction } from "@/type/transaction";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const backEndUrl = "http://192.168.1.2:5000";
+const backEndUrl = "http://10.10.0.245:5000";
 
 const getToken = async () => {
   try {
@@ -45,11 +46,11 @@ export const createUser = async (username: string, password: string) => {
   }
 };
 
-export const signIn = async (username: string, password: string) => {
-  const url = backEndUrl + "/user/login";
+export const signIn = async (phonenumber: string, password: string) => {
+  const url = backEndUrl + "/login";
 
   const requestBody = {
-    username: username,
+    phonenumber: phonenumber,
     password: password,
   };
 
@@ -69,7 +70,7 @@ export const signIn = async (username: string, password: string) => {
     const data = await response.json();
 
     // Save the token to AsyncStorage
-    await AsyncStorage.setItem("token", data.token);
+    await AsyncStorage.setItem("token", data.access_token);
 
     return data;
   } catch (error) {
@@ -88,12 +89,40 @@ export const signOut = async () => {
   }
 };
 
-// get user from current login user
-export const getCurrentUser = async (username: string) => {
-  const url = backEndUrl + "/user/view/" + username;
+// get current login user
+export const getCurrentUser = async () => {
+  const url = backEndUrl + "/get_user";
+  const token = await getToken();
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+
+    return data;
+  } catch (error) {
+    console.error("Error getting user:", error);
+    throw error;
+  }
+};
+
+export const createTransaction = async (transaction: ITransaction) => {
+  const url = backEndUrl + "/transfer";
+  const token = await getToken();
 
   const requestBody = {
-    username: username,
+    phonenumber_reciver: transaction.phonenumber_reciver,
+    amount: transaction.amount,
   };
 
   try {
@@ -101,6 +130,7 @@ export const getCurrentUser = async (username: string) => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify(requestBody),
     });
@@ -113,19 +143,21 @@ export const getCurrentUser = async (username: string) => {
 
     return data;
   } catch (error) {
-    console.error("Error getting user:", error);
+    console.error("Error creating user:", error);
     throw error;
   }
 };
 
-export const getAllPosts = async () => {
-  const url = backEndUrl + "/products/view-all";
+export const getHistoryTransaction = async () => {
+  const url = backEndUrl + "/get_transactions";
+  const token = await getToken();
 
   try {
     const response = await fetch(url, {
-      method: "GET",
+      method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
     });
 
@@ -137,63 +169,7 @@ export const getAllPosts = async () => {
 
     return data;
   } catch (error) {
-    console.error("Error getting products:", error);
+    console.error("Error getting history transactions:", error);
     throw error;
   }
 };
-
-export const getLastestPost = async () => {
-  const url = backEndUrl + "/products/view-all";
-
-  try {
-    const response = await fetch(url, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Error: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-
-    const latestPosts = data.slice(0, 5);
-
-    return latestPosts;
-  } catch (error) {
-    console.error("Error getting user:", error);
-    throw error;
-  }
-};
-
-// search by title
-export const searchPosts = async (keyword: string | string[] | undefined) => {};
-
-// get posts that are written by current login user
-export const getUserPosts = async (username: string) => {
-  const url = backEndUrl + "/products/viewByUser/" + username;
-
-  try {
-    const response = await fetch(url, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Error: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-
-    return data;
-  } catch (error) {
-    console.error("Error getting products:", error);
-    throw error;
-  }
-};
-
-

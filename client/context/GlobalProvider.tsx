@@ -1,12 +1,17 @@
 import { getCurrentUser } from "@/api_lib/api_call";
-import { useContext, createContext, useEffect, useState } from "react";
+import { GlobalContextType, IUser } from "@/type/user";
+import { useContext, createContext, useEffect, useState, FC } from "react";
 
-const GlobalContext = createContext({});
-export const useGlobalContext = () => useContext(GlobalContext);
+export const GlobalContext = createContext<GlobalContextType | null>(null);
 
-const GlobalProvider = ({ children }) => {
+const GlobalProvider: FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<IUser>({
+    phoneNumber: "",
+    social_id: "",
+    name: "",
+    balance: 0,
+  });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -17,7 +22,12 @@ const GlobalProvider = ({ children }) => {
           setUser(res);
         } else {
           setIsLoggedIn(false);
-          setUser(null);
+          setUser({
+            phoneNumber: "",
+            social_id: "",
+            name: "",
+            balance: 0,
+          });
         }
       })
       .catch((error) => {

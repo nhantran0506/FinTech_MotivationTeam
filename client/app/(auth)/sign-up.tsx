@@ -1,24 +1,20 @@
 import { useState } from "react";
-import { Link, router } from "expo-router";
+import { Link } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { View, Text, ScrollView, Dimensions, Alert, Image } from "react-native";
 
 import { images } from "../../constants";
 import CustomButton from "@/components/CustomButton";
 import FormField from "@/components/FormField";
-import { useGlobalContext } from "@/context/GlobalProvider";
 import { createUser } from "@/api_lib/api_call";
 
 const SignUpPage = () => {
-  const { setUser, setIsLoggedIn } = useGlobalContext();
-
   const [form, setForm] = useState({
     username: "",
     password: "",
   });
 
   const [status, setStatus] = useState("");
-
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const submit = async () => {

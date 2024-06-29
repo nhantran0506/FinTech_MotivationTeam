@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useContext, useEffect } from "react";
 import {
   Text,
   View,
@@ -14,8 +14,20 @@ import SlidingUpPanel from "rn-sliding-up-panel";
 import Carousel from "react-native-reanimated-carousel";
 import { images } from "@/constants";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { GlobalContext } from "@/context/GlobalProvider";
+import { GlobalContextType } from "@/type/user";
+import useRefresh from "@/hooks/useRefresh";
+import { getHistoryTransaction } from "@/api_lib/api_call";
 
 export default function HomeScreen() {
+  const { user } = useContext(GlobalContext) as GlobalContextType;
+  const { data: transactions, refetch } = useRefresh(getHistoryTransaction);
+  const [refreshing, setRefreshing] = useState(false);
+
+  useEffect(() => {
+    refetch();
+  }, []);
+
   // Users Data
   const Users = [
     {
@@ -103,12 +115,6 @@ export default function HomeScreen() {
   const { width, height } = Dimensions.get("window");
 
   // SLIDING PANEL
-
-  const [dragRange, setDragRange] = useState({
-    top: height - 80,
-    bottom: 160,
-  });
-
   const _draggedValue = new Animated.Value(180);
 
   const ModalRef = useRef(null);
@@ -119,7 +125,7 @@ export default function HomeScreen() {
         <View>
           <Text className="font-bold text-white text-2xl">Welcome Back,</Text>
           <Text className="font-semibold text-white opacity-60 text-xl">
-            Truong Nguyen
+            {user.name}
           </Text>
         </View>
         <View>
@@ -189,7 +195,10 @@ export default function HomeScreen() {
       <View className="flex-1">
         <SlidingUpPanel
           ref={ModalRef}
-          draggableRange={dragRange}
+          draggableRange={{
+            top: height - 80,
+            bottom: 160,
+          }}
           animatedValue={_draggedValue}
           backdropOpacity={0}
           snappingPoints={[360]}
@@ -204,7 +213,7 @@ export default function HomeScreen() {
 
             <View className="h-[400px] pb-5">
               <FlatList
-                data={Users}
+                data={transactions}
                 keyExtractor={(item) => item.key}
                 renderItem={({ item }) => {
                   return (
@@ -212,12 +221,6 @@ export default function HomeScreen() {
                       <View
                         style={{ flexDirection: "row", alignItems: "center" }}
                       >
-                        <View style={{ marginRight: 10 }}>
-                          <Image
-                            source={{ uri: item.userImage }}
-                            className="w-30 h-30 bg-black rounded-full"
-                          />
-                        </View>
                         <View>
                           <Text style={{ fontSize: 14, color: "#fff" }}>
                             {item.userName}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { router } from "expo-router";
 
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -6,35 +6,29 @@ import { Text, Alert, ScrollView } from "react-native";
 
 import CustomButton from "../../components/CustomButton";
 import FormField from "../../components/FormField";
-import { useGlobalContext } from "../../context/GlobalProvider";
-// import { createTransaction } from "@/lib/apiCall";
-
-type FormState = {
-  sender: string;
-  reveicer: string;
-  amount: number;
-};
+import { GlobalContext } from "../../context/GlobalProvider";
+import { GlobalContextType } from "@/type/user";
+import { createTransaction } from "@/api_lib/api_call";
+import { ITransaction } from "@/type/transaction";
 
 const CreateTrans = () => {
-  const { user } = useGlobalContext();
+  const { user } = useContext(GlobalContext) as GlobalContextType;
   const [uploading, setUploading] = useState(false);
-  const [form, setForm] = useState<FormState>({
-    sender: "",
-    reveicer: "",
+  const [form, setForm] = useState<ITransaction>({
+    phonenumber_reciver: "",
     amount: 0,
   });
 
   const submit = async () => {
-    if (form.reveicer === "" || form.amount === 0) {
+    if (form.phonenumber_reciver === "" || form.amount === 0) {
       return Alert.alert("Please provide all fields");
     }
 
     setUploading(true);
     try {
-      // await createTransaction({
-      //   ...form,
-      //   sender: user.username,
-      // });
+      await createTransaction({
+        ...form
+      });
 
       Alert.alert("Success", "Post uploaded successfully");
       router.push("/home");
@@ -44,10 +38,8 @@ const CreateTrans = () => {
       }
     } finally {
       setForm({
-        reveicer: "",
+        phonenumber_reciver: "",
         amount: 0,
-        // sender: user.username,
-        sender: "",
       });
 
       setUploading(false);
@@ -57,21 +49,22 @@ const CreateTrans = () => {
   return (
     <SafeAreaView className="bg-primary h-full">
       <ScrollView className="px-4 my-6">
-        <Text className="text-2xl text-white font-psemibold">Upload Video</Text>
+        <Text className="text-2xl text-white font-psemibold">Create a transaction</Text>
 
         <FormField
           title="Receive person"
-          value={form.reveicer}
-          placeholder="Give your video a catchy title..."
-          handleChangeText={(e: any) => setForm({ ...form, reveicer: e })}
+          value={form.phonenumber_reciver}
+          placeholder="912345678"
+          handleChangeText={(e: any) => setForm({ ...form, phonenumber_reciver: e })}
           otherStyles="mt-10"
         />
 
         <FormField
           title="Amount"
           value={form.amount}
-          placeholder="How many..."
-          handleChangeText={(e: any) => setForm({ ...form, reveicer: e })}
+          placeholder="$0"
+          keyboardType={"numeric"}
+          handleChangeText={(e: any) => setForm({ ...form, amount: e })}
           otherStyles="mt-7"
         />
 

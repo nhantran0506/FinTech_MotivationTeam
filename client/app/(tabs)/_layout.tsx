@@ -41,18 +41,31 @@ export default function TabLayout() {
 
   return (
     <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-      }}>
+    screenOptions={{
+      tabBarActiveTintColor: "#FFA001",
+      tabBarInactiveTintColor: "#CDCDE0",
+      tabBarShowLabel: false,
+      tabBarStyle: {
+        backgroundColor: "#161622",
+        borderTopWidth: 1,
+        borderTopColor: "#232533",
+        height: 84,
+      },
+    }}>
       <Tabs.Screen
-        name="home"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'home' : 'home-outline'} color={color} />
-          ),
-        }}
+          name="home"
+          options={{
+            title: "Home",
+            headerShown: false,
+            tabBarIcon: ({ color, focused }) => (
+              <TabIcon
+                icon={icons.home}
+                color={color}
+                name="Home"
+                focused={focused}
+              />
+            ),
+          }}
       />
       <Tabs.Screen
           name="create"
