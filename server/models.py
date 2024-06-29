@@ -1,10 +1,17 @@
-from sqlalchemy import Column, String, Float, ForeignKey, DateTime, Enum as SQLEnum
+from sqlalchemy import Column, String, Float, ForeignKey, DateTime, Enum as SQLEnum, PrimaryKeyConstraint
 from sqlalchemy.orm import relationship
 from database import Base, SessionLocal
 from passlib.context import CryptContext
 import uuid
 from datetime import datetime, timedelta
+import enum
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+
+class UserEnum(enum.Enum):
+    ADMIN = "ADMIN",
+    LOAN_OFFICER = "LOAN OFFICER",
+    USER = "USER"
 
 class User(Base):
     __tablename__ = "users"
@@ -13,6 +20,7 @@ class User(Base):
     social_id = Column(String, unique=True)
     name = Column(String, index=True)
     phonenumber = Column(String)
+    roles = Column(SQLEnum(UserEnum), default=UserEnum.USER)
     hash_pwd = Column(String)
     balance = Column(Float, default=0.0)
 
@@ -22,6 +30,9 @@ class User(Base):
 
 def get_user_by_phone(db: SessionLocal , phonenumber: str):
     return db.query(User).filter(User.phonenumber == phonenumber).first()
+
+def get_user_by_id(db: SessionLocal , id: str):
+    return db.query(User).filter(User.id == id).first()
 
 def create_user(db : SessionLocal , name : str, social_id : str,  phonenumber: str, password: str):
     hased_pwd = pwd_context.hash(password)
@@ -49,8 +60,6 @@ class Transaction(Base):
 
 
 # Loans
-import enum 
-
 class LoanStatus(enum.Enum):
     PENDING = "PENDING"
     APPROVED = "APPROVED"
@@ -64,12 +73,27 @@ class Loan(Base):
     id = Column(String, primary_key=True, index=True, default=lambda: str(uuid.uuid4()))
     user_id = Column(String, ForeignKey("users.id"))
     amount = Column(Float, default=0.0)
+    request_date = Column(DateTime, default=datetime.utcnow)
     on_date = Column(DateTime)
     dl_date = Column(DateTime)
 
     status = Column(SQLEnum(LoanStatus), default=LoanStatus.PENDING)
-    loander = relationship("Loans", foreign_keys=[user_id])
+    loander = relationship("User", foreign_keys=[user_id])
 
+
+# Familiar name
+class FamiliarReciever(Base):
+    __tablename__ = "familiar_recievers"
+
+    account_id = Column(String, ForeignKey("users.id"), primary_key=True)
+    familiar_id = Column(String, ForeignKey("users.id"), primary_key=True)
+
+    familiar = relationship("User", foreign_keys=[familiar_id])
+    account = relationship("User", foreign_keys=[account_id])
+
+    __table_args__ = (
+        PrimaryKeyConstraint('account_id', 'familiar_id'),
+    )
 
 
 

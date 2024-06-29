@@ -1,5 +1,6 @@
 from pydantic import BaseModel, validator
-
+from datetime import datetime
+from typing import List
 class UserBase(BaseModel):
     phonenumber: str
     social_id : str
@@ -38,14 +39,13 @@ class Transfer(BaseModel):
     amount: float
 
 class Transaction(BaseModel):
-    id : str
-    sender_id : str
-    receiver_id : str
     amount : float
-    timestamp : str
+    timestamp : datetime 
+    name : str
 
     class Config:
         from_attributes = True
+
         
 class Balance(BaseModel):
     balance: str
@@ -53,4 +53,13 @@ class Balance(BaseModel):
 class Loan(BaseModel):
     phonenumber : str
     amount : float
-    
+
+class LoanUpdate(BaseModel):
+    status : str
+
+
+class Familiar(BaseModel):
+    phonenumber : str
+
+class FamiliarGet(Familiar):
+    name : str
