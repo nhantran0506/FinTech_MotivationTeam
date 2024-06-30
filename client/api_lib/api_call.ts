@@ -1,7 +1,7 @@
 import { ITransaction } from "@/type/transaction";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const backEndUrl = "http://10.10.0.245:5000";
+export const backEndUrl = "http://10.10.0.245:5000";
 
 const getToken = async () => {
   try {
@@ -109,7 +109,12 @@ export const getCurrentUser = async () => {
 
     const data = await response.json();
 
-    return data;
+    return {
+      phoneNumber: data.phonenumber,
+      social_id: data.social_id,
+      name: data.name,
+      balance: data.balance
+    };
   } catch (error) {
     console.error("Error getting user:", error);
     throw error;
@@ -230,3 +235,4 @@ export const addFamilier = async (phonenumber: string) => {
     throw error;
   }
 };
+
