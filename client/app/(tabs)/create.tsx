@@ -33,6 +33,7 @@ const CreateTrans = () => {
       }
     } finally {
       setForm({
+        id: "",
         phonenumber_reciver: "",
         amount: 0,
       });
