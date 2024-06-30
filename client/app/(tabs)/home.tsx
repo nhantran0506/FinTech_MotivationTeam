@@ -17,92 +17,32 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { GlobalContext } from "@/context/GlobalProvider";
 import { GlobalContextType } from "@/type/user";
 import useRefresh from "@/hooks/useRefresh";
-import { getHistoryTransaction } from "@/api_lib/api_call";
+import {
+  addFamilier,
+  getFamilierUser,
+  getHistoryTransaction,
+} from "@/api_lib/api_call";
 
 export default function HomeScreen() {
   const { user } = useContext(GlobalContext) as GlobalContextType;
-  const { data: transactions, refetch } = useRefresh(getHistoryTransaction);
-  const [refreshing, setRefreshing] = useState(false);
+  const { data: transactions, refetch: refetchTrans } = useRefresh(
+    getHistoryTransaction
+  );
+  const { data: users, refetch: refetchUsers } = useRefresh(getFamilierUser);
+
+  // SLIDING PANEL
+  const { width, height } = Dimensions.get("window");
+  const _draggedValue = new Animated.Value(180);
+  const ModalRef = useRef(null);
+
+  const handleAddFamilier = async () => {
+    // await addFamilier();
+  };
 
   useEffect(() => {
-    refetch();
+    refetchTrans();
+    refetchUsers();
   }, []);
-
-  // Users Data
-  const Users = [
-    {
-      key: "1",
-      userImage:
-        "https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
-      userName: "Jessica",
-      transactionDate: "25 April 20",
-      amount: "$350",
-      credit: true,
-    },
-    {
-      key: "2",
-      userImage:
-        "https://images.pexels.com/photos/1024311/pexels-photo-1024311.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
-      userName: "Micela",
-      transactionDate: "16 April 20",
-      amount: "$150",
-      credit: false,
-    },
-    {
-      key: "3",
-      userImage:
-        "https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
-      userName: "Gabriel",
-      transactionDate: "05 April 20",
-      amount: "$364",
-      credit: false,
-    },
-    {
-      key: "4",
-      userImage:
-        "https://images.pexels.com/photos/1082962/pexels-photo-1082962.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
-      userName: "Jasmine",
-      transactionDate: "28 March 20",
-      amount: "$100",
-      credit: true,
-    },
-    {
-      key: "5",
-      userImage:
-        "https://images.pexels.com/photos/1212984/pexels-photo-1212984.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
-      userName: "Alex",
-      transactionDate: "14 March 20",
-      amount: "$450",
-      credit: true,
-    },
-    {
-      key: "6",
-      userImage:
-        "https://images.pexels.com/photos/1548164/pexels-photo-1548164.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
-      userName: "Mark",
-      transactionDate: "05 March 20",
-      amount: "$288",
-      credit: true,
-    },
-    {
-      key: "7",
-      userImage:
-        "https://images.pexels.com/photos/1090387/pexels-photo-1090387.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500",
-      userName: "Daria",
-      transactionDate: "03 March 20",
-      amount: "$350",
-      credit: false,
-    },
-    {
-      key: "8",
-      userImage:
-        "https://images.pexels.com/photos/1516680/pexels-photo-1516680.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
-      userName: "George",
-      transactionDate: "01 March 20",
-      amount: "$350",
-      credit: true,
-    },
-  ];
 
   // Carousel data
   const imagesList = [
@@ -111,13 +51,6 @@ export default function HomeScreen() {
     { id: 3, image: images.card3 },
     { id: 4, image: images.card4 },
   ];
-
-  const { width, height } = Dimensions.get("window");
-
-  // SLIDING PANEL
-  const _draggedValue = new Animated.Value(180);
-
-  const ModalRef = useRef(null);
 
   return (
     <SafeAreaView className="flex-1 bg-black px-1">
@@ -160,7 +93,10 @@ export default function HomeScreen() {
         <View className="pt-4">
           <Text className="text-white opacity-60 ">Send Money</Text>
           <View className="flex flex-row">
-            <TouchableOpacity className="h-24 w-25 justify-center items-center  rounded-lg px-1">
+            <TouchableOpacity
+              className="h-24 w-25 justify-center items-center  rounded-lg px-1"
+              onPress={() => handleAddFamilier()}
+            >
               <View className="w-16 h-16 bg-gray-600 rounded-md  justify-center">
                 <MaterialIcons
                   name="add"
@@ -175,13 +111,13 @@ export default function HomeScreen() {
               inverted
               horizontal
               showsHorizontalScrollIndicator={false}
-              data={Users}
+              data={users}
               renderItem={({ item }) => {
                 return (
                   <View className="h-24 w-25 justify-center items-center  rounded-lg mx-1">
                     <Image
                       className="w-16 h-16 bg-black rounded-md  justify-center"
-                      source={{ uri: item.userImage }}
+                      // source={}
                     />
                     <Text className="text-white">{item.userName}</Text>
                   </View>

@@ -38,7 +38,8 @@
     "react-native-screens": "3.31.1",
     "react-native-web": "~0.19.10",
     "rn-sliding-up-panel": "^2.4.6",
-    "expo-camera": "~15.0.12"
+    "expo-camera": "~15.0.12",
+    "expo-image": "~1.12.12"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
