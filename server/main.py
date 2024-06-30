@@ -7,6 +7,8 @@ from database import SessionLocal, engine
 from sqlalchemy.orm import Session
 from auth import *
 from typing import List
+import qrcode, base64
+from io import BytesIO
 app = FastAPI()
 
 models.Base.metadata.create_all(bind=engine)
@@ -206,5 +208,27 @@ def create_admin(admin : schemas.UserCreate, current_user: models.User = Depends
         social_id=admin.social_id
     )
 
+@app.post("/add_balance")
+def add_balance(input : schemas.Balance,current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if current_user.roles != "LOAN OFFICER":
+        return JSONResponse(content= {"Message":"You are not authorized to perform this action"}, status_code=status.HTTP_401_UNAUTHORIZED)
+    
+    current_user.balance += input.balance
+    db.commit()
+    db.refresh(current_user)
+    return JSONResponse(content={"Message" : "Updated successfully!"}, status_code=status.HTTP_200_OK)
 
+# QR Code
+class QRRequest(BaseModel):
+    qr_text: str
+
+@app.post("/qr")
+def generate_qr(qr: QRRequest):
+    qr_image = qrcode.make(qr.qr_text, box_size=15)
+    qr_image_pil = qr_image.get_image()
+    stream = BytesIO()
+    qr_image_pil.save(stream, format='PNG')
+    qr_image_data = stream.getvalue()
+    qr_image_base64 = base64.b64encode(qr_image_data).decode('utf-8')
+    return {"qr_image_base64": qr_image_base64}
 
